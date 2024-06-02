@@ -1,3 +1,15 @@
+gnome-terminal (3.44.0-1ubuntu1wjd0+VERSION) jammy; urgency=medium
+
+  * Disable transparency patches:
+    - 0001-Restore-transparency.patch
+    - 0001-screen-window-Extra-padding-around-transparent-termi.patch
+    - scrollbar-background-theming.patch
+    An attempt to figure out how/why the terminal goes dark sometimes:
+    https://bugs.launchpad.net/ubuntu/+source/gnome-terminal/+bug/2064716
+    (LP: #2064716)
+
+ -- Walter Doekes <wjdoekes+gnome-terminal@osso.nl>  Sun, 02 Jun 2024 15:43:17 +0200
+
 gnome-terminal (3.44.0-1ubuntu1) jammy; urgency=medium
 
   * Merge with debian, remaining changes:
