@@ -1,0 +1,60 @@
+#!/bin/sh
+cd "$(dirname "$0")"  # jump to curdir
+set -eu
+
+# Pass these on the command line.
+oscodename=${1:-ubuntu/jammy}  # ubuntu/jammy
+upname=gnome-terminal
+upversion=${2:-3.44.0}      # sedutil version
+debepoch=
+debversion=${3:-1ubuntu1wjd0}  # deb build version, e.g. 0osso1
+
+echo "Usage: $0 [$oscodename [$upversion [$debversion]]]"
+echo ".. continuing"
+
+osdistro=${oscodename%/*}   # debian (or ubuntu)
+oscodename=${oscodename#*/} # stretch (or bionic)
+case $osdistro/$oscodename in
+debian/bookworm)osdistshort=deb; oscodenum=12;;
+debian/bullseye)osdistshort=deb; oscodenum=11;;
+debian/buster)  osdistshort=deb; oscodenum=10;;
+debian/stretch) osdistshort=deb; oscodenum=9;;
+debian/jessie)  osdistshort=deb; oscodenum=8;;
+debian/wheezy)  osdistshort=deb; oscodenum=7;;
+ubuntu/jammy)   osdistshort=ubu; oscodenum=22.04;;
+ubuntu/focal)   osdistshort=ubu; oscodenum=20.04;;
+ubuntu/bionic)  osdistshort=ubu; oscodenum=18.04;;
+ubuntu/xenial)  osdistshort=ubu; oscodenum=16.04;;
+ubuntu/trusty)  osdistshort=ubu; oscodenum=14.04;;
+*) echo "ERROR: undefined OS: $osdistro/$oscodename" >&2 && exit 1
+esac
+_shortver=$osdistshort$oscodenum
+
+# Docker disallows certain tokens in versions.
+dockversion=$(echo build-${upname}-${upversion}-${debversion}-${oscodename} |
+    sed -e 's/[^0-9A-Za-z_.-]/_/g')
+
+# Will build files.
+docker build \
+    --pull \
+    --ulimit nofile=512 \
+    --build-arg osdistro=$osdistro \
+    --build-arg osdistshort=$osdistshort \
+    --build-arg oscodename=$oscodename \
+    --build-arg upname=$upname \
+    --build-arg upversion=$upversion \
+    --build-arg debepoch=$debepoch \
+    --build-arg debversion=$debversion \
+    -t $dockversion \
+    -f Dockerfile \
+    . || ret=$?
+if test ${ret:-0} -ne 0; then
+    echo "fail" >&2
+    exit $ret
+fi
+
+# Copy files to ./Dockerfile.out
+test -d Dockerfile.out/$oscodename || mkdir -p Dockerfile.out/$oscodename
+docker run $dockversion sh -c 'cd /dist; tar -zc *' |
+    tar -zxvC Dockerfile.out/$oscodename/ |
+    sed -e 's#$# -> Dockerfile.out/'$oscodename'/#'

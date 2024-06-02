@@ -1,0 +1,7 @@
+/Dockerfile.build
+/Dockerfile.out
+/Dockerfile
+
+/.dockerignore
+/.git
+/.gitignore
